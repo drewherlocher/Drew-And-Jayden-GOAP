@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using System;
 using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.Analytics;
@@ -67,4 +68,43 @@ public class IdleStrategy : IActionStrategy
 
     public void Start() => timer.Start();
     public void Update(float deltaTime) => timer.Tick(deltaTime);
+}
+
+public class MoveStrategy : IActionStrategy
+{
+    private readonly NavAgent agent;
+    private readonly Func<Vector3> targetPositionFunc;
+    private readonly Action onResourceReached;
+    private readonly float stopDistance;
+
+    public bool CanPerform => !Complete;
+    public bool Complete => agent.IsAtDestination();
+
+    public MoveStrategy(NavAgent agent, Func<Vector3> targetPositionFunc, Action onResourceReached, float stopDistance = 2f)
+    {
+        this.agent = agent;
+        this.targetPositionFunc = targetPositionFunc;
+        this.onResourceReached = onResourceReached;
+        this.stopDistance = stopDistance;
+    }
+
+    public void Start()
+    {
+        Vector3 targetPosition = targetPositionFunc();
+        agent.SetDestination(targetPosition);
+    }
+
+    public void Update(float deltaTime)
+    {
+        if (Complete)
+        {
+            onResourceReached?.Invoke(); // Call the resource action
+            agent.StopMovement();
+        }
+    }
+
+    public void Stop()
+    {
+        agent.StopMovement();
+    }
 }

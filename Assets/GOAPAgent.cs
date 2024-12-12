@@ -1,10 +1,11 @@
+using Mono.Cecil;
 using Newtonsoft.Json.Bson;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.AI.Navigation;
 using UnityEngine;
-
-// TODO make stats and have them update and gotten from world state
+using UnityEngine.AI;
 
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(CircleCollider2D))]
@@ -14,13 +15,6 @@ public class GOAPAgent : MonoBehaviour
     [Header("Sensors")]
     [SerializeField] Sensor moveSensor;
     [SerializeField] Sensor doSensor;
-
-    [Header("Known Locations")]
-    [SerializeField] Transform restingPosition;
-    [SerializeField] Transform foodPosition;
-    [SerializeField] Transform waterPosition;
-    [SerializeField] Transform woodPosition;
-    [SerializeField] Transform stonePosition;
 
     CircleCollider2D circleCollider;
     SpriteRenderer spriteRenderer;
@@ -39,6 +33,8 @@ public class GOAPAgent : MonoBehaviour
     public ActionPlan actionPlan;
     public AgentAction currentAction;
 
+    [SerializeField] private ResourceManager resourceManager;
+
     public Dictionary<string, AgentBelief> beliefs;
     public HashSet<AgentAction> actions;
     public HashSet<AgentGoal> goals;
@@ -46,6 +42,7 @@ public class GOAPAgent : MonoBehaviour
     NavAgent navAgent;
 
     IGOAPPlanner gPlanner;
+
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -70,31 +67,153 @@ public class GOAPAgent : MonoBehaviour
         beliefs = new Dictionary<string, AgentBelief>();
         BeliefFactory factory = new BeliefFactory(this, beliefs);
 
-        factory.AddBelief("Nothing", () => false);
+        // Basic agent status beliefs
+        factory.AddBelief("Nothing", () => false);  // Nothing is happening
         factory.AddBelief("AgentIdle", () => !navAgent.IsAtDestination());
         factory.AddBelief("AgentMoving", () => !navAgent.IsAtDestination());
 
+        // Beliefs for resource needs (this can be used to prioritize actions)
+        factory.AddBelief("WaterNeeded", () => ResourceManager.Instance.GetResourceNeed("Water") > 0f);
+        factory.AddBelief("FoodNeeded", () => ResourceManager.Instance.GetResourceNeed("Food") > 0f);
+        factory.AddBelief("WoodNeeded", () => ResourceManager.Instance.GetResourceNeed("Wood") > 0f);
+        factory.AddBelief("StoneNeeded", () => ResourceManager.Instance.GetResourceNeed("Stone") > 0f);
+
+        // Add dynamic location-based beliefs for each resource
+        foreach (var resourceType in ResourceManager.Instance.resourceLocations.Keys)
+        {
+            foreach (var position in ResourceManager.Instance.resourceLocations[resourceType])
+            {
+                string beliefKey = $"AgentAt{resourceType}Location_{position.name}";
+                Debug.Log($"Adding belief for {beliefKey} at position {position.position}");
+                factory.AddLocationBelief(beliefKey, 2f, position);
+            }
+        }
+
+        // Add availability beliefs for resources
+        AddResourceAvailabilityBelief("Food");
+        AddResourceAvailabilityBelief("Wood");
+        AddResourceAvailabilityBelief("Stone");
+        AddResourceAvailabilityBelief("Water");
+    }
+
+    void AddResourceAvailabilityBelief(string resourceType)
+    {
+        beliefs.Add($"{resourceType}Available", new AgentBelief.BeliefBuilder($"{resourceType}Available")
+            .WithCondition(() => ResourceManager.Instance.IsResourceAvailable(resourceType, 1f))  // Checks if the resource is available
+            .Build());
+    }
+
+
+
+    public bool RequestResource(string resourceType, Transform agent, float amount)
+    {
+        Debug.Log($"Requesting {resourceType} for agent at position {agent.position}");
+
+        // Ensure the resource is available
+        if (!ResourceManager.Instance.IsResourceAvailable(resourceType, amount))
+        {
+            Debug.Log($"Resource {resourceType} not available.");
+            return false;
+        }
+
+        // Gather the resource if it's available
+        ResourceManager.Instance.GatherResource(resourceType, amount);
+        Debug.Log($"{resourceType} gathered.");
+        return true;
     }
 
     void SetupActions()
     {
         actions = new HashSet<AgentAction>();
 
-        actions.Add(new AgentAction.ActionBuilder("Relax").WithStrategy(new IdleStrategy(5)).AddEffect(beliefs["Nothing"]).Build());
-        actions.Add(new AgentAction.ActionBuilder("Wander").WithStrategy(new WanderStrategy(navAgent, 10)).AddEffect(beliefs["AgentMoving"]).Build());
+        // Add idle action (Agent does nothing)
+        actions.Add(new AgentAction.ActionBuilder("Relax")
+            .WithStrategy(new IdleStrategy(5))
+            .AddEffect(beliefs["Nothing"])
+            .Build());
+
+        // Add action to wander around
+        actions.Add(new AgentAction.ActionBuilder("Wander")
+            .WithStrategy(new WanderStrategy(navAgent, 10))
+            .AddEffect(beliefs["AgentMoving"])
+            .Build());
+
+        // Action to collect Wood
+        actions.Add(new AgentAction.ActionBuilder("CollectWood")
+     .WithStrategy(new MoveStrategy(
+         navAgent,
+         () => ResourceManager.Instance.GetNearestResourcePosition("Wood", transform.position).position,
+         () => ResourceManager.Instance.RequestResource("Wood")))  // Callback
+     .AddPrecondition(beliefs["WoodAvailable"])
+     .AddEffect(beliefs["Nothing"])
+     .Build());
+
+        // Action to collect Food
+        actions.Add(new AgentAction.ActionBuilder("CollectFood")
+            .WithStrategy(new MoveStrategy(
+                navAgent,
+                () => ResourceManager.Instance.GetNearestResourcePosition("Food", transform.position).position,
+                () => ResourceManager.Instance.RequestResource("Food")))  // Callback
+            .AddPrecondition(beliefs["FoodAvailable"])
+            .AddEffect(beliefs["Nothing"])
+            .Build());
+
+        // Action to collect Stone
+        actions.Add(new AgentAction.ActionBuilder("CollectStone")
+             .WithStrategy(new MoveStrategy(
+                 navAgent,
+                 () => ResourceManager.Instance.GetNearestResourcePosition("Stone", transform.position).position,
+                 () => ResourceManager.Instance.RequestResource("Stone")))  // Callback
+             .AddPrecondition(beliefs["StoneAvailable"])
+             .AddEffect(beliefs["Nothing"])
+             .Build());
+
+
+        // Action to collect Water
+        actions.Add(new AgentAction.ActionBuilder("CollectWater")
+             .WithStrategy(new MoveStrategy(
+                 navAgent,
+                 () => ResourceManager.Instance.GetNearestResourcePosition("Water", transform.position).position,
+                 () => ResourceManager.Instance.RequestResource("Water")))  // Callback
+             .AddPrecondition(beliefs["WaterAvailable"])
+             .AddEffect(beliefs["Nothing"])
+             .Build());
+
     }
+
 
     void SetupGoals()
     {
         goals = new HashSet<AgentGoal>();
-        goals.Add(new AgentGoal.GoalBuilder("Relax").WithPriority(1).WithDesiredEffect(beliefs["Nothing"]).Build());
-        goals.Add(new AgentGoal.GoalBuilder("Wander").WithPriority(1).WithDesiredEffect(beliefs["AgentMoving"]).Build());
+        goals.Add(new AgentGoal.GoalBuilder("Relax")
+            .WithPriority(1)
+            .WithDesiredEffect(beliefs["Nothing"])
+            .Build());
+
+        goals.Add(new AgentGoal.GoalBuilder("Wander")
+            .WithPriority(2)
+            .WithDesiredEffect(beliefs["AgentMoving"])
+            .Build());
+
+        goals.Add(new AgentGoal.GoalBuilder("CollectResources")
+            .WithPriority(3)
+            .WithDesiredEffect(beliefs["FoodAvailable"])  // Collect food if it's available
+            .WithDesiredEffect(beliefs["WoodAvailable"])  // Collect wood if it's available
+            .WithDesiredEffect(beliefs["StoneAvailable"])  // Collect stone if it's available
+            .WithDesiredEffect(beliefs["WaterAvailable"])  // Collect water if it's available
+            .Build());
+
+        // Ensure there are goals in the collection
+        Debug.Log($"Goals count: {goals.Count}");
     }
+
+
 
     bool HasPath(Vector3 targetPosition)
     {
         return navAgent.HasPath(targetPosition);  // Now relies on NavAgent's HasPath
     }
+
     void SetupTimers()
     {
         statsTimer = new CountdownTimer(2f);
@@ -108,22 +227,18 @@ public class GOAPAgent : MonoBehaviour
 
     void UpdateStats()
     {
-
+        // Update agent stats if needed
     }
 
-    bool InRangeOf(Vector3 pos, float range) => Vector3.Distance(transform.position, pos) < range;
     void OnEnable() => moveSensor.OnTargetChanged += HandleTargetChanged;
     void OnDisable() => moveSensor.OnTargetChanged -= HandleTargetChanged;
-    void MoveToTarget(Vector3 targetPosition)
-    {
-        if (navAgent.HasPath(targetPosition))
-        {
-            navAgent.SetDestination(targetPosition);
-        }
-    }
+
+
+
+
     void HandleTargetChanged()
     {
-        Debug.Log("Target changed clearning GOAP");
+        Debug.Log("Target changed, clearing GOAP");
         currentAction = null;
         currentGoal = null;
     }
@@ -131,8 +246,8 @@ public class GOAPAgent : MonoBehaviour
     private void Update()
     {
         statsTimer.Tick(Time.deltaTime);
-        
-        if(currentAction == null)
+
+        if (currentAction == null)
         {
             Debug.Log("Calculating new plan");
             CalculatePlan();
@@ -142,10 +257,10 @@ public class GOAPAgent : MonoBehaviour
                 navAgent.ResetPath();
 
                 currentGoal = actionPlan.AgentGoal;
-                currentAction = actionPlan.Actions.Pop();
-                currentAction.Start();
                 Debug.Log($"Goal: {currentGoal.Name} with {actionPlan.Actions.Count} actions in plan");
+                currentAction = actionPlan.Actions.Pop();
                 Debug.Log($"Popped action: {currentAction.Name}");
+                currentAction.Start();
             }
         }
 
