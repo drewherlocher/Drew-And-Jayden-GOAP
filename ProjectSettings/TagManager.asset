@@ -5,6 +5,10 @@ TagManager:
   serializedVersion: 3
   tags:
   - Resource
+  - Food
+  - Water
+  - Rock
+  - Wood
   layers:
   - Default
   - TransparentFX

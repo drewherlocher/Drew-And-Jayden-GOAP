@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      game-textures-green-lawn-plowed-farm-field_107791-9223-2177436848_0: -7389556244716448548
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -84,10 +84,10 @@ public class Node
 
     public bool isLeafDead => Leaves.Count == 0 && Action == null;
 
-    public Node(Node parent, AgentAction actio, HashSet<AgentBelief> effects, float cost)
+    public Node(Node parent, AgentAction action, HashSet<AgentBelief> effects, float cost)
     {
         Parent = parent;
-        Action = Action;
+        Action = action;
         RequiredEffects = new HashSet<AgentBelief>(effects);
         Leaves = new List<Node>();
         Cost = cost;
@@ -96,7 +96,7 @@ public class Node
 
 
 
-public class ActionPlan : MonoBehaviour
+public class ActionPlan
 {
 
     public AgentGoal AgentGoal { get; }
