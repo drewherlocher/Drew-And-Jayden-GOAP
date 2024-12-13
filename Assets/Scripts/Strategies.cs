@@ -21,7 +21,7 @@ public class WanderStrategy : IActionStrategy
 
     readonly NavAgent agent;
     readonly float wanderRadius;
-    readonly float stopDistance = 2f;
+    //readonly float stopDistance = 2f;
 
     public bool CanPerform => !Complete;
     public bool Complete => agent.IsAtDestination();

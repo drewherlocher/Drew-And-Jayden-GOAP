@@ -12,14 +12,17 @@ using UnityEngine.AI;
 [RequireComponent(typeof(Rigidbody2D))]
 public class GOAPAgent : MonoBehaviour
 {
+    //sensors on agent to detect targetrs
     [Header("Sensors")]
     [SerializeField] Sensor moveSensor;
     [SerializeField] Sensor doSensor;
 
+    //ingo about the agent
     CircleCollider2D circleCollider;
     SpriteRenderer spriteRenderer;
     Rigidbody2D rb;
 
+    //stats for agent to funcion
     [Header("Stats")]
     [SerializeField] float foodNeeded;
 
@@ -35,6 +38,7 @@ public class GOAPAgent : MonoBehaviour
 
     [SerializeField] private ResourceManager resourceManager;
 
+    //calculate agents beliefs goals and actions
     public Dictionary<string, AgentBelief> beliefs;
     public HashSet<AgentAction> actions;
     public HashSet<AgentGoal> goals;
@@ -67,7 +71,7 @@ public class GOAPAgent : MonoBehaviour
         beliefs = new Dictionary<string, AgentBelief>();
         BeliefFactory factory = new BeliefFactory(this, beliefs);
 
-        // Basic agent status beliefs
+        // add basic beliefs
         factory.AddBelief("Nothing", () => false);  // Nothing is happening
 
         factory.AddBelief("AgentIdle", () => !navAgent.IsAtDestination());
@@ -90,7 +94,7 @@ public class GOAPAgent : MonoBehaviour
             }
         }
 
-        // Add availability beliefs for resources
+        // Add availability beliefs for each resource
         AddResourceAvailabilityBelief("Food");
         AddResourceAvailabilityBelief("Wood");
         AddResourceAvailabilityBelief("Stone");
@@ -99,16 +103,7 @@ public class GOAPAgent : MonoBehaviour
 
     void AddResourceAvailabilityBelief(string resourceType)
     {
-        /*        beliefs.Add($"{resourceType}Available", new AgentBelief.BeliefBuilder($"{resourceType}Available")
-                    .WithCondition(() =>
-                    {
-                        bool available = ResourceManager.Instance.IsResourceAvailable(resourceType, 1f);
-                        Debug.Log($"{resourceType} available:::::::::: {available}");
-                        return available;
-                    })
-                    .Build());*/
-
-        //Debug.Log("Erm Add Resource Availabiltiy Belief???");
+        //add a belief that checks if resource exists
         beliefs.Add($"{resourceType}Available", new AgentBelief.BeliefBuilder($"{resourceType}Available")
             .WithCondition(() => ResourceManager.Instance.IsResourceAvailable(resourceType, 1f))  // Checks if the resource is available
             .Build());
@@ -117,14 +112,14 @@ public class GOAPAgent : MonoBehaviour
     {
         Debug.Log($"Requesting {resourceType} for agent at position {agent.position}");
 
-        // Ensure the resource is available
+        // check the resource is available
         if (!ResourceManager.Instance.IsResourceAvailable(resourceType, amount))
         {
             Debug.Log($"Resource {resourceType} not available.");
             return false;
         }
 
-        // Gather the resource if it's available
+        // get the resource if it's available
         ResourceManager.Instance.GatherResource(resourceType, amount);
         Debug.Log($"{resourceType} gathered.");
         return true;
@@ -190,16 +185,20 @@ public class GOAPAgent : MonoBehaviour
     void SetupGoals()
     {
         goals = new HashSet<AgentGoal>();
+
+        //set relax goal 
         goals.Add(new AgentGoal.GoalBuilder("Relax")
             .WithPriority(1)
             .WithDesiredEffect(beliefs["Nothing"])
             .Build());
 
+        //set wander goal
         goals.Add(new AgentGoal.GoalBuilder("Wander")
             .WithPriority(2)
             .WithDesiredEffect(beliefs["AgentMoving"])
             .Build());
 
+        //set collectresources goal
         goals.Add(new AgentGoal.GoalBuilder("CollectResources")
             .WithPriority(3)
             .WithDesiredEffect(beliefs["FoodAvailable"])  // Collect food if it's available
@@ -238,16 +237,11 @@ public class GOAPAgent : MonoBehaviour
         statsTimer = new CountdownTimer(2f);
         statsTimer.OnTimerStop += () =>
         {
-            UpdateStats();
             statsTimer.Start();
         };
         statsTimer.Start();
     }
 
-    void UpdateStats()
-    {
-        // Update agent stats if needed
-    }
 
     void OnEnable() => moveSensor.OnTargetChanged += HandleTargetChanged;
     void OnDisable() => moveSensor.OnTargetChanged -= HandleTargetChanged;
@@ -265,11 +259,13 @@ public class GOAPAgent : MonoBehaviour
 
         if (currentAction == null || actionPlan.Actions.Count ==0)
         {
+            //generate a new plan
             //Debug.Log("Calculating new plan");
             CalculatePlan();
 
             if (actionPlan != null && actionPlan.Actions.Count > 0)
             {
+                //reset navigation and set first action to begin achieving goal
                 navAgent.ResetPath();
 
                 currentGoal = actionPlan.AgentGoal;
@@ -280,18 +276,22 @@ public class GOAPAgent : MonoBehaviour
             }
         }
 
+
         if (actionPlan != null && currentAction != null)
         {
+            //if there already is a goal, udpdate actoins to see if it is completed
             currentAction.Update(Time.deltaTime);
 
             if (currentAction.Complete)
             {
+                //finish action
                 Debug.Log($"{currentAction.Name} complete");
                 currentAction.Stop();
                 currentAction = null;
 
                 if (actionPlan.Actions.Count == 0)
                 {
+                    //mark plan as complete
                     Debug.Log("Plan complete");
                     lastGoal = currentGoal;
                     currentGoal = null;
@@ -300,33 +300,16 @@ public class GOAPAgent : MonoBehaviour
         }
     }
 
-    /*    void CalculatePlan()
-        {
-            var priorityLevel = currentGoal?.Priority ?? 0;
-
-            HashSet<AgentGoal> goalsToCheck = goals;
-
-            if (currentGoal != null)
-            {
-                Debug.Log("Found current goal, checking if other more important ones");
-                goalsToCheck = new HashSet<AgentGoal>(goals.Where(g => g.Priority > priorityLevel));
-            }
-
-            var potentialPlan = gPlanner.Plan(this, goalsToCheck, lastGoal);
-            if (potentialPlan != null)
-            {
-                Debug.Log("Potential Plan Found!");
-                actionPlan = potentialPlan;
-            }
-        }*/
 
     void CalculatePlan()
     {
+        //get priority of current goal
         var priorityLevel = currentGoal?.Priority ?? 0;
 
         // Start by considering all goals
         HashSet<AgentGoal> goalsToCheck = goals;
 
+        //filer out low priority goals
         if (currentGoal != null)
         {
             Debug.Log("Found current goal, checking if more important ones exist");
@@ -339,6 +322,7 @@ public class GOAPAgent : MonoBehaviour
 
         foreach (var goal in goalsToCheck)
         {
+            //check if any of the goals is to collect resources
             if (goal.Name == "CollectResources")
             {
                 Debug.Log($"Evaluating goal: {goal.Name} with priority {goal.Priority}, checking if resources are available...");
@@ -352,7 +336,7 @@ public class GOAPAgent : MonoBehaviour
                     {
                         isResourceAvailable = true;
                         Debug.Log($"Resource {effect.Name} is available.");
-                        break;  // No need to check further if at least one resource is available
+                        break;
                     }
                 }
 

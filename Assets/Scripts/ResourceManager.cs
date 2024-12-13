@@ -6,8 +6,6 @@ public class ResourceManager : MonoBehaviour
 {
     public static ResourceManager Instance;
 
-
-
     // Dictionary of resource locations, where key is resource type (based on GameObject tags)
     public Dictionary<string, List<Transform>> resourceLocations = new Dictionary<string, List<Transform>>();
     private Dictionary<string, int> resources = new Dictionary<string, int>();
@@ -107,18 +105,15 @@ public class ResourceManager : MonoBehaviour
     {
         // Handle resource gathering (e.g., remove resource or reduce quantity)
         Debug.Log($"Gathering {amount} of {resourceType}");
-        // Example: You could reduce the number of available resources here if you manage quantities
     }
 
     public float GetTotalResource(string resourceType)
     {
-        // Return a placeholder value, this could be replaced with actual resource management
         return resourceLocations.ContainsKey(resourceType) ? resourceLocations[resourceType].Count : 0f;
     }
 
     public float GetResourceNeed(string resourceType)
     {
-        // Example: Calculate the amount needed for the agent (could be dynamic)
         return 5f; // Placeholder value
     }
 }
