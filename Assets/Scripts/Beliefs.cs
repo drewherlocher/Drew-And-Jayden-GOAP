@@ -29,7 +29,10 @@ public class BeliefFactory
 
     public void AddLocationBelief(string key, float distance, Vector3 locationCondition)
     {
-        beliefs.Add(key, new AgentBelief.BeliefBuilder(key).WithCondition(() => InRangeOf(locationCondition, distance)).WithLocation(() => locationCondition).Build());
+        beliefs.Add(key, new AgentBelief.BeliefBuilder(key)
+            .WithCondition(() => InRangeOf(locationCondition, distance))
+            .WithLocation(() => locationCondition)
+            .Build());
     }
     bool InRangeOf(Vector3 pos, float range) => Vector3.Distance(agent.transform.position, pos) < range;
 }
@@ -38,7 +41,6 @@ public class AgentBelief
     public string Name { get; }
 
     Func<bool> condition = () => false;
-
     Func<Vector3> observedLocation = () => Vector3.zero;
 
     public Vector3 Location => observedLocation();

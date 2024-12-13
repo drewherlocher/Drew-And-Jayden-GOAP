@@ -6,13 +6,13 @@ using UnityEngine.Analytics;
 
 public interface IActionStrategy
 {
-    bool CanPerform {  get; }
+    bool CanPerform { get; }
     bool Complete { get; }
 
     void Start() { }
 
     void Update(float deltaTime) { }
-    
+
     void Stop() { }
 }
 
@@ -56,9 +56,9 @@ public class IdleStrategy : IActionStrategy
 {
     public bool CanPerform => true;
     public bool Complete { get; private set; }
-    
+
     readonly CountdownTimer timer;
-   
+
     public IdleStrategy(float duration)
     {
         timer = new CountdownTimer(duration);

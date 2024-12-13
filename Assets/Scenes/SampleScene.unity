@@ -119,6 +119,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &9362556 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6711926441591689061, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
+  m_PrefabInstance: {fileID: 2034860078}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f80094a237889b24b9bb78fd6afe9616, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &27818212 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5511337245914256260, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
@@ -725,6 +736,7 @@ GameObject:
   - component: {fileID: 605361481}
   - component: {fileID: 605361483}
   - component: {fileID: 605361482}
+  - component: {fileID: 605361484}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -789,6 +801,38 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 605361480}
   m_CullTransparentMesh: 1
+--- !u!114 &605361484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 605361480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 1b61d95ef9018324eac851fe86b62f00, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &621611653
 GameObject:
   m_ObjectHideFlags: 0
@@ -3014,6 +3058,17 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &1979913825 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4673011406145506118, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
+  m_PrefabInstance: {fileID: 2034860078}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f80094a237889b24b9bb78fd6afe9616, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2010668465
 GameObject:
   m_ObjectHideFlags: 0
@@ -3291,6 +3346,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 1640883647}
     m_Modifications:
     - target: {fileID: 37116970112675584, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
+      propertyPath: woodPlace
+      value: 
+      objectReference: {fileID: 2010668466}
+    - target: {fileID: 37116970112675584, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
+      propertyPath: chaseSensor
+      value: 
+      objectReference: {fileID: 1979913825}
+    - target: {fileID: 37116970112675584, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
+      propertyPath: attackSensor
+      value: 
+      objectReference: {fileID: 9362556}
+    - target: {fileID: 37116970112675584, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
       propertyPath: foodPosition
       value: 
       objectReference: {fileID: 1768017824}
@@ -3310,9 +3377,17 @@ PrefabInstance:
       propertyPath: resourceManager
       value: 
       objectReference: {fileID: 440665218}
+    - target: {fileID: 37116970112675584, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
+      propertyPath: restingPosition
+      value: 
+      objectReference: {fileID: 1640883647}
     - target: {fileID: 2612883621372864027, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
       propertyPath: m_Name
       value: Villager
+      objectReference: {fileID: 0}
+    - target: {fileID: 2612883621372864027, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
+      propertyPath: m_TagString
+      value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 5511337245914256260, guid: 49934f2c0afe95147b79d51bdde11eda, type: 3}
       propertyPath: m_LocalPosition.x

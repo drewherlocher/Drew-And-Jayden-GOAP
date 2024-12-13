@@ -3,12 +3,12 @@ using UnityEngine;
 
 public class AgentGoal
 {
-    public string Name {  get; }
+    public string Name { get; }
     public float Priority { get; private set; }
     public HashSet<AgentBelief> DesiredEffects { get; } = new();
 
     AgentGoal(string name)
-    { 
+    {
         Name = name;
     }
 
@@ -35,4 +35,4 @@ public class AgentGoal
             return goal;
         }
     }
-    }
+}

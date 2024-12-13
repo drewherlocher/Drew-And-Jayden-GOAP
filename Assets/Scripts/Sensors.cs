@@ -53,7 +53,7 @@ public class Sensor : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+/*    private void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("Resource")) return;
         UpdateTargetPosition(other.gameObject);
@@ -62,6 +62,17 @@ public class Sensor : MonoBehaviour
     private void OnTriggerExit2D(Collider2D other)
     {
         if (!other.CompareTag("Resource")) return;
+        UpdateTargetPosition();
+    }*/
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!other.CompareTag("Player")) return;
+        UpdateTargetPosition(other.gameObject);
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (!other.CompareTag("Player")) return;
         UpdateTargetPosition();
     }
 

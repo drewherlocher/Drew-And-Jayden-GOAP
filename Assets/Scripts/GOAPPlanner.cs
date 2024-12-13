@@ -12,7 +12,12 @@ public class GOAPPlanner : IGOAPPlanner
 {
     public ActionPlan Plan(GOAPAgent agent, HashSet<AgentGoal> goals, AgentGoal mostRecentGoal = null)
     {
-        List<AgentGoal> orderedGoals = goals.Where(g => g.DesiredEffects.Any(b => !b.Evaluate())).OrderByDescending(g => g == mostRecentGoal ? g.Priority - 0.01 : g.Priority).ToList();
+        //List<AgentGoal> orderedGoals = goals.Where(g => g.DesiredEffects.Any(b => !b.Evaluate())).OrderByDescending(g => g == mostRecentGoal ? g.Priority - 0.01 : g.Priority).ToList();
+        List<AgentGoal> orderedGoals = goals
+            .Where(g => g.DesiredEffects.Any(b => !b.Evaluate()))
+            .OrderByDescending(g => g == mostRecentGoal ? g.Priority - 0.01 : g.Priority)
+            .ToList();
+
         foreach (var goal in orderedGoals)
         {
             Node goalNode = new Node(null, null, goal.DesiredEffects, 0);
@@ -32,12 +37,15 @@ public class GOAPPlanner : IGOAPPlanner
             }
         }
 
-        Debug.Log("No plan found");
+        Debug.Log("No plan found while within GOAP Planner");
         return null;
     }
     bool FindPath(Node parent, HashSet<AgentAction> actions)
     {
-        foreach (var action in actions)
+        var orderedActions = actions.OrderBy(a => a.Cost);
+
+        //foreach (var action in actions)
+        foreach (var action in orderedActions)
         {
             var requiredEffects = parent.RequiredEffects;
 
@@ -94,12 +102,10 @@ public class Node
     }
 }
 
-
-
 public class ActionPlan
 {
 
-    public AgentGoal AgentGoal { get; }
+    public AgentGoal AgentGoal { get; set; }
     public Stack<AgentAction> Actions { get; }
     public float TotalCost { get; }
 
